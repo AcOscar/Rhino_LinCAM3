@@ -1318,6 +1318,10 @@ class g_curve():
                 else:
                     no_points = int(rs.CurveLength(crv)/self.general_input['tolerance'])
                     pts = rs.DivideCurve(crv,no_points, create_points=False, return_points=True)[1:]
+                    
+                    if rs.IsCurveClosed(crv):
+                        pts.append(rs.CurveStartPoint(crv))
+                        
                     for pt in pts:
                         if curve_segments.index(crv) == 0 and pts.index(pt) == 0 and add_feed:  #si hay cambio de estado entre plunge y cut y es primera linea añade la variable de feed
                             pt = self.round_point(pt)
