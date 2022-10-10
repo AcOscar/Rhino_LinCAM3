@@ -87,9 +87,9 @@ class camDialog(forms.Form):
         self.general_settings = self.get_general_settings()
         self.postprocessors = self.get_postprocessors()
         self.machining_input = self.get_machining_input()
-        #Como el registro de rhino se copia de archivo a archivo, revisa que la rutina seleccionada exista en ese archivo.
+        #Since the rhino log is copied from file to file, it checks that the selected routine exists in that file.
         if self.user_data['selected_preset'] not in self.machining_settings: self.user_data['selected_preset'] = False
-        #Revisa si hay algun post seleccionado si no asigna el primero de la lista
+        #Check if there is any selected post if not assign the first one in the list.
         if not self.user_data['post']: self.user_data['post'] = sorted(self.postprocessors.keys())[-1]
         
         # Form settings
@@ -236,7 +236,7 @@ class camDialog(forms.Form):
         return True
     
     def AddWorkingLayers():
-        #Agrega layers al archivo para hacer desmadre de g_curve
+        #Add layers to the file to make g_curve unwind
         if not rs.IsLayer(self.offset_layer):rs.AddLayer(self.offset_layer)
         else: rs.DeleteObjects(rs.ObjectsByLayer(self.offset_layer))
         if not rs.IsLayer(self.trash_layer):rs.AddLayer(self.trash_layer)
@@ -733,7 +733,7 @@ class camDialog(forms.Form):
             cero_point = rhino_objects["cero_point"]
             del rhino_objects["cero_point"]
         else: cero_point = (0,0,0)
-        #Ad tag to new cero
+        #Add tag to new cero
         dot = rs.AddTextDot("+",cero_point)
         rs.ObjectLayer(dot,self.layer_sorting)
         rs.ObjectColor(dot,(200,200,200))
@@ -1181,7 +1181,7 @@ class g_curve():
         self.general_input = general_input
         self.compensation = compensation
         self.pocketing = pocketing
-        self.curve  = curve #Curva original nada la modifica, la que se usa es la self.nurbs_curve
+        self.curve  = curve #Original curve nothing modifies it, the self.nurbs_curve is used.
         self.nurbs_curve  = curve
         self.cero_point = cero_point
         self.cam_type = cam_type
@@ -1229,10 +1229,10 @@ class g_curve():
 
         else:
             if self.input_data["finish_pass"] and not self.input_data["finish_entries"]:
-                #Crea una pasada de acabado en el ultimo nivel
+                #Creates a finishing pass on the last level
                 self.preview =  self.get_cut_path_closed(self.cut_curve,finish_pass=self.input_data["finish_pass"])
             elif self.input_data["finish_pass"]:
-                #Crea una pasada de acabado igual al cut curve pero con offset diferente
+                #Creates a finishing pass equal to the cut curve but with a different offset
                  crv_finish_offset = self.get_cut_curve(self.compensation,(self.general_input['cut_diam']*.5)+self.input_data["finish_pass"])
                  self.preview =  self.get_cut_path_closed(crv_finish_offset)
                  self.preview += self.get_cut_path_closed(self.cut_curve,no_entries=self.input_data["finish_entries"],plunge_distance=False,omit_box=True)
@@ -1260,7 +1260,7 @@ class g_curve():
                 
         gcode = []
         gcode_points = []
-        #Los puntos no tienes plunge
+        #Points do not have plunge
         if not rs.IsPoint(self.nurbs_curve):
             feed_plunge = self.input_data['feed_plunge']
             feed_rapid = self.general_input["feed_rapid"]
@@ -1270,10 +1270,10 @@ class g_curve():
             feed_rapid = self.general_input["feed_rapid"]
             feed_cut = self.input_data["feed"]
         
-        #Crea el G0Hello y el primer punto de corte y extrae la primer curva de corte
+        #Creates the G0Hello and the first cut point and extracts the first cutting curve
         hello_pt = self.round_point(rs.CurveStartPoint(crv_list[0]))
         gcode.append("%s X%sY%sZ%s %s%s" % (self.post['rapid'],hello_pt[0],hello_pt[1],hello_pt[2],self.post['feed'],int(feed_rapid)))
-        #Adjunta el feed y el hello point a la lista de puntos
+        #Attach the feed and the hello point to the list of points.
         gcode_points.append({'feed':int(feed_rapid),'point':hello_pt})
         
         state = self.rgb_state(crv_list[0])
@@ -1281,7 +1281,7 @@ class g_curve():
         gcode.append("%s Z%s %s%s" % (self.post['cut'],start_cut_pt[2],self.post['feed'],int(feed_plunge)))
         gcode_points.append({'feed':int(feed_plunge),'point':start_cut_pt})
         crvs_list = crv_list[1:]
-        #revisa cada bloque de curvas 
+        #reviews each block of curves 
         last_state = state
         
         for crv in crvs_list: 
@@ -1304,12 +1304,12 @@ class g_curve():
            
             curve_segments = rs.ExplodeCurves(crv, delete_input=False)
             if not curve_segments: curve_segments = [rs.CopyObject(crv)]
-            #revisa cada segmento en la curva para ver si es arco o linea etc y asigna codigo por punto 
+            #check each segment on the curve to see if it is an arc or line etc. and assign code per point 
             for crv in curve_segments:
                 crv_gcode = []
-                if rs.IsLine(crv) or rs.CurveLength(crv)<self.general_input['tolerance']: # Si la linea es recta
+                if rs.IsLine(crv) or rs.CurveLength(crv)<self.general_input['tolerance']: # If the line is straight
                     crv_endpt = self.round_point(rs.CurveEndPoint(crv))
-                    if curve_segments.index(crv) == 0 and add_feed:  #si hay cambio de estado entre plunge y cut y es primera linea añade la variable de feed
+                    if curve_segments.index(crv) == 0 and add_feed:  #if there is a change of state between plunge and cut and it is the first line add the feed variable
                         crv_gcode.append("%s X%sY%sZ%s %s%s" % (prefix,crv_endpt[0],crv_endpt[1],crv_endpt[2],self.post['feed'],int(current_feed)))
                     else:
                         crv_gcode.append("X%sY%sZ%s" % (crv_endpt[0],crv_endpt[1],crv_endpt[2]))
@@ -1323,7 +1323,7 @@ class g_curve():
                         pts.append(rs.CurveStartPoint(crv))
                         
                     for pt in pts:
-                        if curve_segments.index(crv) == 0 and pts.index(pt) == 0 and add_feed:  #si hay cambio de estado entre plunge y cut y es primera linea añade la variable de feed
+                        if curve_segments.index(crv) == 0 and pts.index(pt) == 0 and add_feed:  #if there is a change of state between plunge and cut and it is the first line add the feed variable
                             pt = self.round_point(pt)
                             crv_gcode.append("%s X%sY%sZ%s %s%s" % (prefix,pt[0],pt[1],pt[2],self.post['feed'],int(current_feed)))
                         else:
@@ -1362,7 +1362,7 @@ class g_curve():
         no_entries = self.input_data["entries"]
         level_depth = self.input_data["depth"] / no_entries
         sec_plane = self.general_input["sec_plane"]
-        #Lista final de operacion de cortador por curva
+        #Final operating checklist for curve cutter
         curves_cut_path = []
     
         start_point = (point[0],point[1],point[2]+2)
@@ -1388,7 +1388,7 @@ class g_curve():
         no_entries = self.input_data["entries"]
         level_depth = self.input_data["depth"]/ no_entries
         sec_plane = self.general_input["sec_plane"]
-        #Lista final de operacion de cortador por curva
+        #Final operating checklist for curve cutter
         curves_cut_path = [] 
         
         for entrie in range(1,int(no_entries)+1):
@@ -1593,7 +1593,7 @@ class g_curve():
             pocket_path += jump(rs.CurveEndPoint(pocket_perimeter[0]),rs.CurveStartPoint(pocket_circles[0]),sec_plane,self.color_palette)
         pocket_path += pocket_circles
         
-        if pocket_clusters: # Revisa si es circulo
+        if pocket_clusters: # Check if it is a circle
             pocket_path += jump(rs.CurveEndPoint(pocket_circles[-1]),rs.CurveStartPoint(pocket_clusters[0]),sec_plane,self.color_palette)
             for i,path in enumerate(pocket_clusters):
                 pocket_path.append(path)
@@ -1661,7 +1661,7 @@ class g_curve():
         if finish_pass: crv = self.get_cut_curve(compensation=self.compensation,offset_distance=finish_pass,nurbs_curve=main_crv)
         else: crv = main_crv
         
-        #crea la curva de corte y la curva de plunge en el nivel original
+        #creates the cutting curve and the plunge curve at the original level
         plunge_distance = self.input_data["plunge"] if not plunge_distance else plunge_distance
         no_entries = no_entries if no_entries else self.input_data["entries"]
         level_depth = self.input_data["depth"]/ no_entries
@@ -1693,7 +1693,7 @@ class g_curve():
         plunge_crv = rs.AddPolyline(plunge_moved_pts)
         rs.SimplifyCurve(plunge_crv)
         
-        #Crea las curvas de corte para pocketing si se requiere
+        #Creates cutting curves for pocketing if required
         if self.pocketing and not omit_box:
             if self.input_data["circular_pocketing"]:
                 pocketing_crvs = self.get_pocketing_crvs_circular(crv)
@@ -1702,10 +1702,10 @@ class g_curve():
                 pocketing_crvs = self.get_pocketing_crvs_offset(crv)
                 self.pocketing = False if not pocketing_crvs else self.pocketing
        
-        #Lista final de operacion de cortador por curva
+        #Final operating checklist for curve cutter
         curves_cut_path = [] 
         
-        #agrega la entrada del cortador
+        #adds cutter input
         entry_end_point = rs.CurveStartPoint(planar_plunge_crv)
         sec_plane = self.general_input["sec_plane"]
         in_curve = rs.AddLine((entry_end_point[0],entry_end_point[1],sec_plane),entry_end_point)
@@ -1720,7 +1720,7 @@ class g_curve():
         curves_cut_path.append(in_curve_plunge)
         
         
-        #general la lista de curvas y las ordena por nivel diferenciando entre plunge y corte por color
+        #general list of curves and sorts them by level, differentiating between plunge and cut by color.
         for entrie in range(1,int(no_entries)+1):
             z_level = level_depth*entrie
             translation = rs.VectorAdd((0,0,0),(0,0,z_level))
@@ -1737,7 +1737,7 @@ class g_curve():
                     pocket_path = self.pocket_path_offset(z_level,translation,pocketing_crvs)
                 curves_cut_path += pocket_path
                 
-        #agrega la ultima linea de corte como plunge para no generar bote de pieza tan brusco
+        #add the last cut line as a plunge to avoid generating such an abrupt piece bounce.
         #final_cut = rs.CopyObject(planar_plunge_crv,translation)
        
         # Uses final cut as bridge. Cancel = 0 Experimental. 
@@ -1754,7 +1754,7 @@ class g_curve():
         rs.ObjectColor(final_cut,self.color_palette["cut"])
         curves_cut_path.append(final_cut)
         
-        #agrega pasada de acabado
+        #adds finishing pass
         if finish_pass:
             finish_cut_curve = rs.CopyObject(main_crv,translation)
             rs.CurveSeam(finish_cut_curve,rs.CurveClosestPoint(finish_cut_curve , rs.CurveEndPoint(final_cut)))
@@ -1767,7 +1767,7 @@ class g_curve():
             curves_cut_path.append(finish_cut_curve)
             curves_cut_path.append(out_finish_curve)
          
-        #agrega la salida del cortador
+        #adds cutter output
         final_point = rs.CurveEndPoint(final_cut)
         out_curve = rs.AddLine(final_point,(final_point[0],final_point[1],sec_plane))
         rs.ObjectColor(out_curve,self.color_palette["rapid"])
@@ -1775,7 +1775,7 @@ class g_curve():
         
         rs.DeleteObjects([planar_plunge_crv,plunge_crv,cut_crv,crv,main_crv])
         
-        #Borra las curvas de pocketing en el nivel cero que solo se usan para copiar
+        #Deletes pocketing curves at level zero that are only used for copying
         if self.pocketing and not omit_box and pocketing_crvs:
             if self.input_data["circular_pocketing"]:
                 for p in pocketing_crvs:
@@ -1802,7 +1802,7 @@ class g_curve():
         pocket_list = revised_list
         for i in range(0,len(pocket_list)):
             crv = pocket_list[i]
-            if crv == "sec_plane": #Cambio intermedio
+            if crv == "sec_plane": #Intermediate shift
                 pep = rs.CurveEndPoint(pocket_list[i-1])
                 try:
                     nsp = rs.CurveStartPoint(pocket_list[i+1])
@@ -1846,7 +1846,7 @@ class g_curve():
         offset_a = rs.OffsetCurve(nurbs_curve,offset_point_a,offset_distance,None,2)
         offset_b = rs.OffsetCurve(nurbs_curve,offset_point_b,offset_distance,None,2)
 
-        #Revisa si el offset no genero curvas separadas y si es el caso asigna la curva original como offset comparativo
+        #Check if the offset did not generate separate curves and if so, assign the original curve as a comparative offset.
         if not offset_a or len(offset_a) != 1:
             if offset_a: rs.DeleteObjects(offset_a)
             offset_a = rs.CopyObject(nurbs_curve)
@@ -1855,23 +1855,23 @@ class g_curve():
             if offset_b: rs.DeleteObjects(offset_b)  
             offset_b = rs.CopyObject(nurbs_curve)
                 
-        #Revisa el area para saber cual es el offset interno o externo
+        #Check the area for internal or external offset.
         if rs.CurveArea(offset_a) < rs.CurveArea(offset_b):
             in_offset = offset_a
             out_offset = offset_b
         else:
             in_offset = offset_b
             out_offset = offset_a
-        #Responde dependiendo que compensacion se necesita
+        #Respond depending on what compensation is needed
         if compensation == 1:
             rs.DeleteObject(in_offset)
-            #Da orientaciona la curva dependiendo del giro del cortador
+            #Gives orientation of the curve depending on the cutter rotation
             if rs.ClosedCurveOrientation(out_offset, direction=(0,0,1)) == -1:
                 rs.ReverseCurve(out_offset)
             return out_offset
         elif compensation == -1:
             rs.DeleteObject(out_offset)
-            #Da orientaciona la curva dependiendo del giro del cortador
+            #Gives orientation of the curve depending on the cutter rotation
             if rs.ClosedCurveOrientation(in_offset, direction=(0,0,1)) == 1:
                 rs.ReverseCurve(in_offset)
             return in_offset
