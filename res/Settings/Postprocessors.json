@@ -32,5 +32,21 @@
         "footer": [
             "M5"
         ]
+    }, 
+    "Stepcraft": {
+        "spindle": "S", 
+        "description": "", 
+        "feed": "F", 
+        "round_tol": 2, 
+        "cut": "G01", 
+        "header": [
+            "G90", 
+            "G54", 
+            "M3"
+        ], 
+        "rapid": "G00", 
+        "footer": [
+            "M5"
+        ]
     }
 }
