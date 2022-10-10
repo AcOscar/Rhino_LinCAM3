@@ -35,6 +35,7 @@ from collections import OrderedDict
 import traceback
 
 COMMAND_NAME = "LinCAM3"
+PLUGIN_NAME = "LinCAM"
 VERSION = "CG-2022-1"
 WEBPAGE = 'https://github.com/AcOscar/Rhino_LinCAM3'
 
@@ -71,8 +72,9 @@ class camDialog(forms.Form):
         self.language_text = False
 
     # Basic form initialization
-    def Initialize(self,command_name,version,webpage):
+    def Initialize(self,plugin_name,command_name,version,webpage):
         
+        self.plugin_name = plugin_name
         self.command_name = command_name
         self.version = version
         self.webpage = webpage
@@ -115,7 +117,7 @@ class camDialog(forms.Form):
                 self.image_folder = os.path.join(work_folder, "res","Icons")
                 settings_folder = os.path.join(work_folder, "res","Settings")
             except:
-                id = Rhino.PlugIns.PlugIn.IdFromName(self.command_name)
+                id = Rhino.PlugIns.PlugIn.IdFromName(self.plugin_name)
                 plugin_folder = os.path.dirname(Rhino.PlugIns.PlugIn.Find(id).Assembly.Location)
                 plugin_version = os.path.basename(plugin_folder)
                 local_folder = os.path.join(os.getenv('APPDATA'),self.command_name)# if rs.IsRunningOnWindows() else 
@@ -1894,7 +1896,7 @@ def Main():
     
     # Create and show form
     form = camDialog()
-    if not form.Initialize(COMMAND_NAME,VERSION,WEBPAGE): return
+    if not form.Initialize(PLUGIN_NAME,COMMAND_NAME,VERSION,WEBPAGE): return
     form.Owner = Rhino.UI.RhinoEtoApp.MainWindow
     form.Show()
     # Add the form to the sticky dictionary so it

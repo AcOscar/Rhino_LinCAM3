@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-16"?>
+<RhinoScriptCompilerProject>
+  <Plugin>
+    <PluginName>LinCAM</PluginName>
+    <Description>a tiny CAM</Description>
+    <OutputPath>bin\</OutputPath>
+    <AuthorName>Holger Rasch</AuthorName>
+    <AuthorEmail>h.rasch@christgantenbein.com</AuthorEmail>
+    <AuthorPhone>+41 61 260 9020</AuthorPhone>
+    <AuthorAddress>Basel</AuthorAddress>
+    <AuthorCountry>Switzerland</AuthorCountry>
+    <AuthorWebsite>www.christgantenbein.com</AuthorWebsite>
+    <URL>https://github.com/AcOscar/Rhino_LinCAM3</URL>
+    <CopyrightMessage>Welcome to LinCAM</CopyrightMessage>
+    <SemanticVersion>1.0.0</SemanticVersion>
+    <Platform>Windows</Platform>
+    <MinimumRhinoVersion>7.0</MinimumRhinoVersion>
+  </Plugin>
+  <Commands>
+    <!--Compiled Script: LinCAM3-->
+    <Command>
+      <Name>LinCAM3</Name>
+      <Path>LinCAM3.py</Path>
+      <Type>Normal</Type>
+    </Command>
+  </Commands>
+</RhinoScriptCompilerProject>
