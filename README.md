@@ -41,10 +41,13 @@ Prior into opening the plugin you will need to assign a color to each curve depe
 
 ### Install
 
- 1. [Download Windows Rhino 6 installation file from GitHub.](https://github.com/dfmdmx/Rhino_LinCAM3/raw/master/LinCAM3.rhi)
+ 1. [Download Windows Rhino installation file from GitHub.](https://github.com/AcOscar/Rhino_LinCAM3/edit/master/LinCAM3.rhi)
  2. Install the plugin and restart Rhino.
  3. Open the plugin by typing `LinCAM3` in the Rhino command bar.
 
 ### Disclaimer
+
+I took over this project from https://github.com/dfmdmx/Rhino_LinCAM3
+I made some little ajustments to work with a [Stepcraft](https://stepcraft-systems.com/)
 
 Currently the project is under development so we recommend you to update it frequently. It is not suitable for all types of CNC machines. It was developed for GRBL controllers such as Arduino and TinyG. It was made by the conjunction of different scripts used along the years in the workshop. So here it goes... **Its use is responsibility of the end user and we are not responsible for any direct or indirect damage that this program may cause, but mainly, we hope you find it useful!**
