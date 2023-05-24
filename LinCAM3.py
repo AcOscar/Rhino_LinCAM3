@@ -3,7 +3,6 @@
 #
 # Copyright 2015,2016,2017,2018 Daniel Fernandez MD (daniel@dfmd.mx), Saul Pilatowsky C (saul@dfmd.mx) 
 # distributed by www.ingenierialinarand.com
-# Copyright 2022 Holger Rasch (h.rasch@christgantenbein.com)
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -37,7 +36,7 @@ import traceback
 
 COMMAND_NAME = "LinCAM3"
 PLUGIN_NAME = "LinCAM"
-VERSION = "CG-2022-1"
+VERSION = "CG-2023-1"
 WEBPAGE = 'https://github.com/AcOscar/Rhino_LinCAM3'
 
 # SampleEtoRoomNumber dialog class
@@ -939,7 +938,7 @@ class camDialog(forms.Form):
             self.objects_count = len(object_list)
             for obj in object_list:
                 index = object_list.index(obj)
-                sort_dot = rs.AddTextDot(str(index),obj.start_point)
+                sort_dot = rs.AddTextDot(str(index +1),obj.start_point)
                 rs.ObjectLayer(sort_dot,self.layer_sorting)
                 obj.process()
                 rs.ObjectLayer(obj.preview,self.layer_preview)
@@ -1275,12 +1274,14 @@ class g_curve():
         
         #Creates the G0Hello and the first cut point and extracts the first cutting curve
         hello_pt = self.round_point(rs.CurveStartPoint(crv_list[0]))
+        #gcode.append("(1)")
         gcode.append("%s X%sY%sZ%s %s%s" % (self.post['rapid'],hello_pt[0],hello_pt[1],hello_pt[2],self.post['feed'],int(feed_rapid)))
         #Attach the feed and the hello point to the list of points.
         gcode_points.append({'feed':int(feed_rapid),'point':hello_pt})
         
         state = self.rgb_state(crv_list[0])
         start_cut_pt = self.round_point(rs.CurveEndPoint(crv_list[0]))
+        #gcode.append("(2)")
         gcode.append("%s Z%s %s%s" % (self.post['cut'],start_cut_pt[2],self.post['feed'],int(feed_plunge)))
         gcode_points.append({'feed':int(feed_plunge),'point':start_cut_pt})
         crvs_list = crv_list[1:]
@@ -1310,12 +1311,50 @@ class g_curve():
             #check each segment on the curve to see if it is an arc or line etc. and assign code per point 
             for crv in curve_segments:
                 crv_gcode = []
-                if rs.IsLine(crv) or rs.CurveLength(crv)<self.general_input['tolerance']: # If the line is straight
+                if rs.IsCircle(crv):
+                    atol=sc.doc.ModelAngleToleranceDegrees
+                    cir_ctr = self.round_point(rs.CircleCenterPoint(crv))
+                    cir_Start = self.round_point(rs.CurveStartPoint(crv))
+                    ref_plane=rs.ViewCPlane()
+                    arc_crv=rs.coercecurve(crv)
+                    rc,arc=arc_crv.TryGetArc()
+                    arc_plane = arc.Plane
+                    delta_ptx = cir_ctr[0] - cir_Start[0] 
+                    delta_pty = cir_ctr[1] - cir_Start[1]
+                    angle=rs.VectorAngle(ref_plane.Normal,arc_plane.Normal)
+                    if Rhino.RhinoMath.EpsilonEquals(angle,180,atol): arc_dir="G02" #clockwise
+                    elif Rhino.RhinoMath.EpsilonEquals(angle,0,atol): arc_dir="G03" #counterclockwise
+                    #crv_gcode.append("(3)")
+                    crv_gcode.append("%s I%sJ%s %s%s" % (arc_dir,delta_ptx,delta_pty,self.post['feed'],int(current_feed)))
+                elif rs.IsArc(crv):
+                    atol=sc.doc.ModelAngleToleranceDegrees
+                    cir_ctr = self.round_point(rs.ArcCenterPoint(crv))
+                    cir_Start = self.round_point(rs.CurveStartPoint(crv))
+                    cir_End = self.round_point(rs.CurveEndPoint(crv))
+                    ref_plane=rs.ViewCPlane()
+                    arc_crv=rs.coercecurve(crv)
+                    rc,arc=arc_crv.TryGetArc()
+                    arc_plane = arc.Plane
+                    delta_ptx = cir_ctr[0] - cir_Start[0] 
+                    delta_pty = cir_ctr[1] - cir_Start[1]
+                    angle=rs.VectorAngle(ref_plane.Normal,arc_plane.Normal)
+                    if Rhino.RhinoMath.EpsilonEquals(angle,180,atol): arc_dir="G02" #clockwise
+                    elif Rhino.RhinoMath.EpsilonEquals(angle,0,atol): arc_dir="G03" #counterclockwise
+                    #crv_gcode.append("(4)")
+                    crv_gcode.append("%s X%sY%s I%sJ%s %s%s" % (arc_dir,cir_End[0],cir_End[1],delta_ptx,delta_pty,self.post['feed'],int(current_feed)))                    
+                    
+                    #crv_gcode.append("%s X%sY%sZ%s %s%s" % (prefix,crv_endpt[0],crv_endpt[1],crv_endpt[2],self.post['feed'],int(current_feed)))
+                elif rs.IsLine(crv) or rs.CurveLength(crv)<self.general_input['tolerance']: # If the line is straight
                     crv_endpt = self.round_point(rs.CurveEndPoint(crv))
                     if curve_segments.index(crv) == 0 and add_feed:  #if there is a change of state between plunge and cut and it is the first line add the feed variable
+                        #crv_gcode.append("(5)")
                         crv_gcode.append("%s X%sY%sZ%s %s%s" % (prefix,crv_endpt[0],crv_endpt[1],crv_endpt[2],self.post['feed'],int(current_feed)))
                     else:
-                        crv_gcode.append("X%sY%sZ%s" % (crv_endpt[0],crv_endpt[1],crv_endpt[2]))
+                        #crv_gcode.append("(6)")
+                        
+                        #crv_gcode.append("%s X%sY%sZ%s" % (self.post['rapid'],crv_endpt[0],crv_endpt[1],crv_endpt[2]))
+                        #crv_gcode.append("X%sY%sZ%s" % (crv_endpt[0],crv_endpt[1],crv_endpt[2]))
+                        crv_gcode.append("%s X%sY%sZ%s %s%s" % (prefix,crv_endpt[0],crv_endpt[1],crv_endpt[2],self.post['feed'],int(current_feed)))
                         
                     gcode_points.append({'feed':int(current_feed),'point':crv_endpt})
                 else:
@@ -1324,13 +1363,17 @@ class g_curve():
                     
                     if rs.IsCurveClosed(crv):
                         pts.append(rs.CurveStartPoint(crv))
-                        
+                    #crv_gcode.append("(7)")
+                    fst_pnt = self.round_point(pts[0])
+                    crv_gcode.append("%s X%sY%sZ%s %s%s" % (prefix,fst_pnt[0],fst_pnt[1],fst_pnt[2],self.post['feed'],int(current_feed)))
                     for pt in pts:
                         if curve_segments.index(crv) == 0 and pts.index(pt) == 0 and add_feed:  #if there is a change of state between plunge and cut and it is the first line add the feed variable
                             pt = self.round_point(pt)
+                            crv_gcode.append("(8)")
                             crv_gcode.append("%s X%sY%sZ%s %s%s" % (prefix,pt[0],pt[1],pt[2],self.post['feed'],int(current_feed)))
                         else:
                             pt = self.round_point(pt)
+                            crv_gcode.append("(9)")
                             crv_gcode.append("X%sY%sZ%s" % (pt[0],pt[1],pt[2]))
                             
                         gcode_points.append({'feed':int(current_feed),'point':pt})
