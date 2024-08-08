@@ -144,7 +144,7 @@
             "feed_plunge": 1000.0, 
             "depth": -1.0, 
             "entries": 1.0, 
-            "feed_cut": 600.0
+            "feed_cut": 1000.0
         }, 
         "desbaste": {
             "entries": 1.0, 
