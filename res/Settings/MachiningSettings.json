@@ -135,7 +135,7 @@
             "spindle": 100.0
         }, 
         "barrenado": {
-            "depth": 0.0, 
+            "depth": -0.0, 
             "entries": 1.0, 
             "feed": 800.0
         }, 
